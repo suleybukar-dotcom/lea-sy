@@ -1,22 +1,32 @@
+/* ─── Scroll Progress Bar ────────────────────────────────────────────────── */
+
+const progressBar = document.createElement('div');
+progressBar.className = 'scroll-progress';
+document.body.prepend(progressBar);
+
+const updateProgress = () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+};
+
+window.addEventListener('scroll', updateProgress, { passive: true });
+
+
 /* ─── Navigation ─────────────────────────────────────────────────────────── */
 
 const nav = document.querySelector('.nav');
 const menuBtn = document.querySelector('.nav-menu-btn');
 const mobileNav = document.querySelector('.nav-mobile');
 
-// Scroll behavior — add .scrolled class after 40px
 const handleNavScroll = () => {
-  if (window.scrollY > 40) {
-    nav.classList.add('scrolled');
-  } else {
-    nav.classList.remove('scrolled');
-  }
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+  updateProgress();
 };
 
 window.addEventListener('scroll', handleNavScroll, { passive: true });
 handleNavScroll();
 
-// Mobile menu toggle
 if (menuBtn && mobileNav) {
   menuBtn.addEventListener('click', () => {
     const open = menuBtn.classList.toggle('open');
@@ -31,7 +41,6 @@ if (menuBtn && mobileNav) {
     }
   });
 
-  // Close mobile nav on link click
   mobileNav.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       menuBtn.classList.remove('open');
@@ -42,7 +51,6 @@ if (menuBtn && mobileNav) {
   });
 }
 
-// Mark current page nav link as active
 const currentPath = location.pathname.split('/').pop() || 'index.html';
 document.querySelectorAll('.nav-links a, .nav-mobile a').forEach(link => {
   const href = link.getAttribute('href');
@@ -50,6 +58,17 @@ document.querySelectorAll('.nav-links a, .nav-mobile a').forEach(link => {
     link.classList.add('active');
   }
 });
+
+
+/* ─── Hero Parallax ──────────────────────────────────────────────────────── */
+
+const heroWrap = document.querySelector('.hero-image .photo-wrap');
+if (heroWrap) {
+  window.addEventListener('scroll', () => {
+    const offset = window.scrollY * 0.25;
+    heroWrap.style.transform = `translateY(${offset}px)`;
+  }, { passive: true });
+}
 
 
 /* ─── Fade-up on scroll ──────────────────────────────────────────────────── */
@@ -63,7 +82,7 @@ const fadeObserver = new IntersectionObserver(
       }
     });
   },
-  { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+  { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
 );
 
 document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
@@ -84,6 +103,52 @@ const skillBarObserver = new IntersectionObserver(
 );
 
 document.querySelectorAll('.skill-bar-fill').forEach(el => skillBarObserver.observe(el));
+
+
+/* ─── 3D Card Tilt ───────────────────────────────────────────────────────── */
+
+const TILT_MAX = 8; // degrees
+
+function applyTilt(el) {
+  el.classList.add('tilt-card');
+
+  el.addEventListener('mousemove', (e) => {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    const rotX = -dy * TILT_MAX;
+    const rotY =  dx * TILT_MAX;
+    el.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-4px)`;
+  });
+
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+  });
+}
+
+document.querySelectorAll('.work-card, .journal-card, .tool-item, .read-card, .value-item').forEach(applyTilt);
+
+
+/* ─── Magnetic Buttons ───────────────────────────────────────────────────── */
+
+const MAGNETIC_STRENGTH = 0.35;
+
+document.querySelectorAll('.btn').forEach(btn => {
+  btn.classList.add('btn-magnetic');
+
+  btn.addEventListener('mousemove', (e) => {
+    const rect = btn.getBoundingClientRect();
+    const dx = (e.clientX - (rect.left + rect.width / 2)) * MAGNETIC_STRENGTH;
+    const dy = (e.clientY - (rect.top  + rect.height / 2)) * MAGNETIC_STRENGTH;
+    btn.style.transform = `translate(${dx}px, ${dy}px) translateY(-2px)`;
+  });
+
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = '';
+  });
+});
 
 
 /* ─── Gallery filter ─────────────────────────────────────────────────────── */
@@ -112,7 +177,7 @@ if (galleryBtns.length) {
 /* ─── Journal category filter ────────────────────────────────────────────── */
 
 const journalCatBtns = document.querySelectorAll('.journal-cat-btn');
-const journalCards = document.querySelectorAll('.journal-post-card[data-category]');
+const journalCards   = document.querySelectorAll('.journal-post-card[data-category]');
 
 if (journalCatBtns.length) {
   journalCatBtns.forEach(btn => {
@@ -139,16 +204,13 @@ if (newsletterForm) {
   newsletterForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const input = newsletterForm.querySelector('input[type="email"]');
-    const btn = newsletterForm.querySelector('button');
-    const originalText = btn.textContent;
-
+    const btn   = newsletterForm.querySelector('button');
     btn.textContent = 'Thank you ✓';
     btn.style.background = '#5C3E30';
     input.value = '';
     input.disabled = true;
-
     setTimeout(() => {
-      btn.textContent = originalText;
+      btn.textContent = 'Subscribe';
       btn.style.background = '';
       input.disabled = false;
     }, 4000);
@@ -163,27 +225,14 @@ if (contactForm) {
   contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const btn = contactForm.querySelector('.form-submit .btn');
-    const originalText = btn.textContent;
     btn.textContent = 'Message sent ✓';
     btn.style.background = '#5C3E30';
     btn.style.borderColor = '#5C3E30';
     contactForm.reset();
-
     setTimeout(() => {
-      btn.textContent = originalText;
+      btn.textContent = 'Send message';
       btn.style.background = '';
       btn.style.borderColor = '';
     }, 5000);
   });
 }
-
-
-/* ─── Image placeholder camera icon SVG ─────────────────────────────────── */
-const cameraIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-  <circle cx="12" cy="13" r="4"></circle>
-</svg>`;
-
-document.querySelectorAll('.img-ph-inner svg').forEach(el => {
-  el.outerHTML = cameraIcon;
-});
